@@ -85,10 +85,6 @@ namespace eld
                     parentStack.pop();
                 }
 
-                // self-loop case
-                if (out.size() == 1 && !traits::allowed_self_loop<GraphNodeT>())
-                    out.clear();
-
                 return out;
             }
         };
