@@ -1,6 +1,6 @@
 ﻿#pragma once
 
-#include "graph_search/reactive.h"
+#include "find_path/reactive.h"
 
 #include <type_traits>
 

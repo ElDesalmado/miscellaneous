@@ -1,6 +1,6 @@
 ﻿
-#include "graph_search/find_path.h"
-#include "graph_search/impl/find_path_std.h"
+#include "find_path/find_path.h"
+#include "find_path/impl/find_path_std.h"
 
 #include <cstddef>
 #include <vector>

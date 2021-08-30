@@ -1,7 +1,7 @@
 ﻿#pragma once
 
-#include "graph_search/reactive.h"
-#include "graph_search/traits.h"
+#include "find_path/reactive.h"
+#include "find_path/traits.h"
 
 #include <memory>
 #include <queue>
