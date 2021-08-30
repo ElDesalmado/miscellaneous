@@ -1,5 +1,7 @@
 ﻿#pragma once
 
+#include "graph_search/reactive.h"
+
 #include <type_traits>
 
 namespace eld
@@ -14,12 +16,9 @@ namespace eld
     {
     } constexpr no_options{};
 
-    struct no_policy_t
-    {
-    } constexpr no_policy{};
-
     namespace impl
     {
+        // TODO: options with mixins?
         template<typename GraphNodeT, typename OptionsT>
         struct find_path;
 
@@ -34,29 +33,31 @@ namespace eld
         {
             return find_path<GraphNodeT, no_options_t>();
         }
-
-    }
+    }   // namespace impl
 
     template<template<typename...> class TOutputContainer,
              typename... M,
              typename GraphNodeT,
-             typename OptionsT>
-    constexpr TOutputContainer<const GraphNodeT*, M...> find_path(const GraphNodeT &from,
-                                                             const GraphNodeT &to,
-                                                             const OptionsT &options)
+             typename OptionsT,
+             typename ReactiveT = no_reactive_t>
+    constexpr TOutputContainer<const GraphNodeT *, M...> find_path(
+        const GraphNodeT &from,
+        const GraphNodeT &to,
+        const OptionsT &options,
+        const ReactiveT &reactive = no_reactive)
     {
         return impl::make_find_path<GraphNodeT>(options)
-            .template operator()<TOutputContainer, M...>(from, to);
+            .template operator()<TOutputContainer, M...>(from, to, reactive);
     }
 
-    template<template<typename...> class TOutputContainer,
-             typename... M,
-             typename GraphNodeT,
-             typename GraphT>
-    constexpr TOutputContainer<GraphNodeT *, M...> find_path(const GraphNodeT &from,
-                                                             const GraphNodeT &to)
-    {
-        return find_path<TOutputContainer, M...>(from, to, no_options);
-    }
+    // TODO: do I need this?
+    //    template<template<typename...> class TOutputContainer,
+    //             typename... M,
+    //             typename GraphNodeT>
+    //    constexpr TOutputContainer<GraphNodeT *, M...> find_path(const GraphNodeT &from,
+    //                                                             const GraphNodeT &to)
+    //    {
+    //        return find_path<TOutputContainer, M...>(from, to, no_options);
+    //    }
 
 }   // namespace eld

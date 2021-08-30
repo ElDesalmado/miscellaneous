@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include "graph_search/traits.h"
+#include "graph_search/reactive.h"
 
 #include <memory>
 #include <queue>
@@ -42,13 +43,17 @@ namespace eld
             explicit find_path(options::dfs_t<impl_std>) {}
 
             // TODO: remove GraphT structure, use only nodes/vertices?
-            template<template<typename...> class TOutputContainerT, typename... M>
+            template<template<typename...> class TOutputContainerT, typename... M,
+                     typename ReactiveT>
             TOutputContainerT<const GraphNodeT *, M...> operator()(const GraphNodeT &from,
-                                                                   const GraphNodeT &to)
+                                                                   const GraphNodeT &to,
+                                                                   const ReactiveT &reactive)
             {
                 // TODO: this must not be a set or a map or any self-balancing tree/self-sorting
-                //  container
+                //  container. THis check must be within a public API layer functions
                 using out_type = TOutputContainerT<const GraphNodeT *, M...>;
+
+                reactive::onStart(reactive);
 
                 // parent stack is used to track current path (chain of nodes)
                 std::stack<const GraphNodeT *> parentStack{};
@@ -60,6 +65,10 @@ namespace eld
 
                 while (!parentStack.empty())
                 {
+                    // TODO: throw exception?
+                    if (reactive::abortRequested(reactive))
+                        break;
+
                     // break when found
                     if (*parentStack.top() == to)
                         break;
@@ -74,10 +83,13 @@ namespace eld
                     const GraphNodeT *nextNode = std::addressof(*(childrenStack.top()++));
                     parentStack.template emplace(nextNode);
                     childrenStack.template emplace(nextNode->cbegin());
+                    reactive::processingNode(reactive, *nextNode);
                 }
 
                 out_type out{};
                 out.reserve(parentStack.size());
+
+                reactive::onFinished(reactive);
 
                 while (!parentStack.empty())
                 {
@@ -98,12 +110,8 @@ namespace eld
                                                            const GraphT &)
             {
                 using out_type = TOutputContainerT<const GraphNodeT *, M...>;
-                if (traits::allowed_self_loop<GraphNodeT>() && from == to)
-                {
-                    out_type out{};
-                    out.push_back(std::addressof(from));
-                    return out;
-                }
+
+
 
                 // TODO: implement
                 return {};
