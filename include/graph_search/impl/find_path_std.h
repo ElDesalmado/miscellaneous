@@ -1,7 +1,7 @@
 ﻿#pragma once
 
-#include "graph_search/traits.h"
 #include "graph_search/reactive.h"
+#include "graph_search/traits.h"
 
 #include <memory>
 #include <queue>
@@ -30,7 +30,7 @@ namespace eld
         struct bfs_t<impl_std, M...>
         {
         };
-    }
+    }   // namespace options
 
     constexpr options::dfs_t<impl_std> dfs_std{};
     constexpr options::bfs_t<impl_std> bfs_std{};
@@ -40,10 +40,13 @@ namespace eld
         template<typename GraphNodeT>
         struct find_path<GraphNodeT, options::dfs_t<impl_std>>
         {
-            explicit find_path(options::dfs_t<impl_std>) {}
+            explicit find_path(options::dfs_t<impl_std>)   //
+            {
+            }
 
             // TODO: remove GraphT structure, use only nodes/vertices?
-            template<template<typename...> class TOutputContainerT, typename... M,
+            template<template<typename...> class TOutputContainerT,
+                     typename... M,
                      typename ReactiveT>
             TOutputContainerT<const GraphNodeT *, M...> operator()(const GraphNodeT &from,
                                                                    const GraphNodeT &to,
@@ -104,48 +107,95 @@ namespace eld
         template<typename GraphNodeT>
         struct find_path<GraphNodeT, options::bfs_t<impl_std>>
         {
-            template<template<typename...> class TOutputContainerT, typename... M, typename GraphT>
-            TOutputContainerT<GraphNodeT, M...> operator()(const GraphNodeT &from,
+            explicit find_path(options::bfs_t<impl_std>)   //
+            {
+            }
+
+            template<template<typename...> class TOutputContainerT,
+                     typename... M,
+                     typename ReactiveT>
+            TOutputContainerT<const GraphNodeT*, M...> operator()(const GraphNodeT &from,
                                                            const GraphNodeT &to,
-                                                           const GraphT &)
+                                                           const ReactiveT &reactive)
             {
                 using out_type = TOutputContainerT<const GraphNodeT *, M...>;
+                reactive::onStart(reactive);
 
+                std::stack<const GraphNodeT *> parentStack{};
 
+                // stack for tracking processed children of current parent.
+                std::stack<std::queue<const GraphNodeT *>> childrenStack{};
+                //                childrenStack.template emplace();
 
-                // TODO: implement
-                return {};
+                std::queue<const GraphNodeT*> nodeQueue{};
+                nodeQueue.push(std::addressof(from));
+
+                while (!nodeQueue.empty())
+                {
+                    // TODO: throw exception?
+                    if (reactive::abortRequested(reactive))
+                        break;
+
+                    parentStack.template emplace(nodeQueue.front());
+                    childrenStack.template emplace();
+
+                    // parse children
+                    bool finished = false;
+
+                    auto iter = nodeQueue.front()->cbegin();
+                    const auto iterEnd = nodeQueue.front()->cend();
+                    while (iter != iterEnd)
+                    {
+                        // TODO: throw exception?
+                        if (reactive::abortRequested(reactive))
+                        {
+                            finished = true;
+                            break;
+                        }
+
+                        reactive::processingNode(reactive, *iter);
+
+                        // if found
+                        if (*iter == to)
+                        {
+                            parentStack.push(std::addressof(*iter));
+                            finished = true;
+                            break;
+                        }
+
+                        nodeQueue.push(std::addressof(*iter));
+                        childrenStack.top().push(std::addressof(*iter));
+                        ++iter;
+                    }
+
+                    if (finished)
+                        break;
+
+                    nodeQueue.pop();
+                    if (!childrenStack.top().empty())
+                        childrenStack.top().pop();
+
+                    if (childrenStack.top().empty())
+                    {
+                        parentStack.pop();
+                        childrenStack.pop();
+                    }
+                }
+
+                out_type out{};
+                out.reserve(parentStack.size());
+
+                reactive::onFinished(reactive);
+
+                while (!parentStack.empty())
+                {
+                    out.insert(out.begin(), std::move(parentStack.top()));
+                    parentStack.pop();
+                }
+
+                return out;
             }
         };
+    }   // namespace impl
 
-        //
-        //        template<typename GraphNodeT>
-        //        struct find_path<GraphNodeT, options::dfs_t<std>>
-        //        {
-        //            using graph_node_type = GraphNodeT;
-        //
-        //            template<template<typename...> class TContainerOutT, typename... T>
-        //            bool operator()(const graph_node_type &root,
-        //                            TContainerOutT<graph_node_type *, T...> &containerOut)
-        //            {
-        //                // TODO: implement
-        //                return false;
-        //            }
-        //        };
-        //
-        //        template<typename GraphNodeT>
-        //        struct find_path<GraphNodeT, options::bfs_t<std>>
-        //        {
-        //            using graph_node_type = GraphNodeT;
-        //
-        //            template<template<typename...> class TContainerOutT, typename... T>
-        //            bool operator()(const graph_node_type &root,
-        //                            TContainerOutT<graph_node_type *, T...> &containerOut)
-        //            {
-        //                // TODO: implement
-        //                return false;
-        //            }
-        //        };
-    }
-
-}
+}   // namespace eld

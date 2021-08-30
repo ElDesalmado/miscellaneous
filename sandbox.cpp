@@ -32,8 +32,23 @@ struct Reactive
 
     void onFinished() const { std::cout << "finished" << std::endl; }
 
-    void processingNode(const Node &n) const { std::cout << "processing node: " << n.value << std::endl; }
+    void processingNode(const Node &n) const
+    {
+        std::cout << "processing node: " << n.value << std::endl;
+    }
 };
+
+template<typename ContainerT>
+void printPath(const ContainerT &container)
+{
+    for (size_t i = 0; i != container.size(); ++i)
+    {
+        std::cout << container[i]->value;
+        if (i != container.size() - 1)
+            std::cout << " -> ";
+    }
+    std::cout << std::endl;
+}
 
 int main(int, char **)
 {
@@ -43,7 +58,11 @@ int main(int, char **)
                        { Node{ 23 }, Node{ 42 } } },   //
                  Node{ 16 } } };
 
-    auto vecRes = eld::find_path<std::vector>(root, Node{ 42 }, eld::dfs_std, Reactive());
+    auto resDfs = eld::find_path<std::vector>(root, Node{ 42 }, eld::dfs_std, Reactive());
+    printPath(resDfs);
+
+    auto resBfs = eld::find_path<std::vector>(root, Node{ 42 }, eld::bfs_std, Reactive());
+    printPath(resBfs);
 
     return 0;
 }
