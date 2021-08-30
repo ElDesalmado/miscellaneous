@@ -42,10 +42,9 @@ namespace eld
             explicit find_path(options::dfs_t<impl_std>) {}
 
             // TODO: remove GraphT structure, use only nodes/vertices?
-            template<template<typename...> class TOutputContainerT, typename... M, typename GraphT>
+            template<template<typename...> class TOutputContainerT, typename... M>
             TOutputContainerT<const GraphNodeT *, M...> operator()(const GraphNodeT &from,
-                                                                   const GraphNodeT &to,
-                                                                   const GraphT &)
+                                                                   const GraphNodeT &to)
             {
                 // TODO: this must not be a set or a map or any self-balancing tree/self-sorting
                 //  container

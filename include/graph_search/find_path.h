@@ -40,15 +40,13 @@ namespace eld
     template<template<typename...> class TOutputContainer,
              typename... M,
              typename GraphNodeT,
-             typename OptionsT,
-             typename GraphT>
+             typename OptionsT>
     constexpr TOutputContainer<const GraphNodeT*, M...> find_path(const GraphNodeT &from,
                                                              const GraphNodeT &to,
-                                                             const GraphT &graph,
                                                              const OptionsT &options)
     {
         return impl::make_find_path<GraphNodeT>(options)
-            .template operator()<TOutputContainer, M...>(from, to, graph);
+            .template operator()<TOutputContainer, M...>(from, to);
     }
 
     template<template<typename...> class TOutputContainer,
@@ -56,10 +54,9 @@ namespace eld
              typename GraphNodeT,
              typename GraphT>
     constexpr TOutputContainer<GraphNodeT *, M...> find_path(const GraphNodeT &from,
-                                                             const GraphNodeT &to,
-                                                             const GraphT &graph)
+                                                             const GraphNodeT &to)
     {
-        return find_path<TOutputContainer, M...>(from, to, graph, no_options);
+        return find_path<TOutputContainer, M...>(from, to, no_options);
     }
 
 }   // namespace eld

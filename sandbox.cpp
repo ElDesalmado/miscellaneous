@@ -35,7 +35,7 @@ int main(int, char **)
                  Node{ 16 } } };
 
 
-    auto vecRes = eld::find_path<std::vector>(root, Node{42}, graph(), eld::dfs_std);
+    auto vecRes = eld::find_path<std::vector>(root, Node{42}, eld::dfs_std);
 
     std::vector<Node *> path{};
 
